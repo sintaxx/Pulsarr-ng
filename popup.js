@@ -1,51 +1,51 @@
 "use strict";
 var pulsarr;
 var pulsarrConfig = {
-	"radarr": {
-		"isEnabled": false,
-		"configuration": {
-			"host": "",
-			"port": "",
-			"apikey": "",
-			"isAuth": false,
-			"auth": {
-				"user": "",
-				"password": "",
-			}
-		},
-		"preferences": {
-			"monitored": true,
-			"minAvail": "announced",
+    "radarr": {
+        "isEnabled": false,
+        "configuration": {
+            "host": "",
+            "port": "",
+            "apikey": "",
+            "isAuth": false,
+            "auth": {
+                "user": "",
+                "password": "",
+            }
+        },
+        "preferences": {
+            "monitored": true,
+            "minAvail": "announced",
             "qualityProfileId": 1,
             "folderPath": ""
-		}
-	},
-	"sonarr": {
-		"isEnabled": false,
-		"configuration": {
-			"host": "",
-			"port": "",
-			"apikey": "",
-			"isAuth": false,
-			"auth": {
-				"user": "",
-				"password": "",
-			}
-		},
-		"preferences": {
-			"monitored": true,
-			"seriesType": "standard",
+        }
+    },
+    "sonarr": {
+        "isEnabled": false,
+        "configuration": {
+            "host": "",
+            "port": "",
+            "apikey": "",
+            "isAuth": false,
+            "auth": {
+                "user": "",
+                "password": "",
+            }
+        },
+        "preferences": {
+            "monitored": true,
+            "seriesType": "standard",
             "qualityProfileId": 1,
             "folderPath": ""
-		}
-	}
+        }
+    }
 };
 var radarr;
 var sonarr;
 
 const blackhole = {
     "type": "blackhole",
-    "blackhole":{
+    "blackhole": {
         "status": 404,
         "text": [{
             "images": [{
@@ -97,14 +97,14 @@ class Pulsarr {
 
                 pulsarr.loaded();
 
-                $('#btnExists').on('click', function() {
+                $('#btnExists').on('click', function () {
                     chrome.tabs.create({
                         url: radarr.constructBaseUrl() + "/movie/" + media.existingSlug
                     });
                     return false;
                 });
 
-                $('#btnAdd').on('click', function() {
+                $('#btnAdd').on('click', function () {
                     radarr.addMovie(
                         media.movie.text[0],
                         $('#lstProfile').val(),
@@ -115,7 +115,7 @@ class Pulsarr {
                     );
                 });
 
-                $('#btnAddSearch').on('click', function() {
+                $('#btnAddSearch').on('click', function () {
                     radarr.addMovie(
                         media.movie.text[0],
                         $('#lstProfile').val(),
@@ -125,7 +125,7 @@ class Pulsarr {
                         $('#lstFolderPath').val() ? $('#lstFolderPath').val() : addPath
                     );
                 });
-            break;
+                break;
 
             case "series":
                 $('#serverName').text("Add to Sonarr");
@@ -161,14 +161,14 @@ class Pulsarr {
 
                 pulsarr.loaded();
 
-                $('#btnExists').on('click', function() {
+                $('#btnExists').on('click', function () {
                     chrome.tabs.create({
                         url: sonarr.constructBaseUrl() + "/series/" + media.existingSlug
                     });
                     return false;
                 });
 
-                $('#btnAdd').on('click', function() {
+                $('#btnAdd').on('click', function () {
                     sonarr.addSeries(
                         media.series.text[0],
                         $('#lstProfile').val(),
@@ -179,7 +179,7 @@ class Pulsarr {
                     );
                 });
 
-                $('#btnAddSearch').on('click', function() {
+                $('#btnAddSearch').on('click', function () {
                     sonarr.addSeries(
                         media.series.text[0],
                         $('#lstProfile').val(),
@@ -228,23 +228,29 @@ class Pulsarr {
         return regex.test(url);
     }
 
-	isTrakt(url) {
-		var regex = new RegExp(".*trakt.tv\/");
+    isTrakt(url) {
+        var regex = new RegExp(".*trakt.tv\/");
 
-		return regex.test(url);
-	}
-	
-	isRotten(url) {
-		var regex = new RegExp(".*rottentomatoes.com\/");
+        return regex.test(url);
+    }
 
-		return regex.test(url);
-	}
-	
-	isTMB(url) {
-		var regex = new RegExp(".*themoviedb.org\/");
+    isRotten(url) {
+        var regex = new RegExp(".*rottentomatoes.com\/");
 
-		return regex.test(url);
-	}
+        return regex.test(url);
+    }
+
+    isTMB(url) {
+        var regex = new RegExp(".*themoviedb.org\/");
+
+        return regex.test(url);
+    }
+    extractTMDBID(url) {
+    // Matches themoviedb.org/tv/<id> or themoviedb.org/movie/<id>
+    let m = url.match(/themoviedb\.org\/(?:tv|movie)\/(\d+)/);
+    return m ? m[1] : "";
+}
+
 
     extractIMDBID(url) {
         var regex = new RegExp("\\/tt\\d{7,}");
@@ -258,47 +264,47 @@ class Pulsarr {
         var regex = new RegExp("(&|\\?)(id|seriesid)=\\d{1,7}");
         var tvdbid = regex.exec(url);
 
-        return (tvdbid) ? tvdbid[0].split("=")[1]:"";
+        return (tvdbid) ? tvdbid[0].split("=")[1] : "";
     }
 
     async TvdbidFromImdbid(imdbid) {
-		let result = await $.ajax({url: "http://thetvdb.com/api/GetSeriesByRemoteID.php?imdbid=" + imdbid, datatype: "xml"});
+        let result = await $.ajax({ url: "http://thetvdb.com/api/GetSeriesByRemoteID.php?imdbid=" + imdbid, datatype: "xml" });
 
-		return $(result).find("seriesid").text();
+        return $(result).find("seriesid").text();
     }
-	
-	async ImdbidFromTitle(title,ismovie) {
-		if (ismovie){
-			var url = "http://www.imdb.com/find?s=tt&ttype=ft&ref_=fn_ft&q=" + title;
-		} else {
-			var url = "http://www.imdb.com/find?s=tt&&ttype=tv&ref_=fn_tv&q=" + title;
-		}
-		let result = await $.ajax({url: url, datatype: "xml"});
-		var regex = new RegExp("\\/tt\\d{7,}");
-		let imdbid = await regex.exec($(result).find(".result_text").find("a").attr("href"));
-
-		return (imdbid) ? imdbid[0].slice(1) : "";
 
 
-	}
-	
+    async ImdbidFromTitle(title, ismovie) {
+        if (ismovie) {
+            var url = "http://www.imdb.com/find?s=tt&ttype=ft&ref_=fn_ft&q=" + title;
+        } else {
+            var url = "http://www.imdb.com/find?s=tt&&ttype=tv&ref_=fn_tv&q=" + title;
+        }
+        let result = await $.ajax({ url: url, datatype: "xml" });
+        var regex = new RegExp("\\/tt\\d{7,}");
+        let imdbid = await regex.exec($(result).find(".result_text").find("a").attr("href"));
+
+        return (imdbid) ? imdbid[0].slice(1) : "";
+    }
+
+
     saveSettings() {
         localStorage.setItem("pulsarrConfig", JSON.stringify(pulsarrConfig));
     }
 
     portConfigToV2() {
         pulsarrConfig.radarr.isEnabled = true;
-    	pulsarrConfig.radarr.configuration.host = localStorage.getItem("host");
+        pulsarrConfig.radarr.configuration.host = localStorage.getItem("host");
         localStorage.removeItem("host");
-    	pulsarrConfig.radarr.configuration.port = localStorage.getItem("port");
+        pulsarrConfig.radarr.configuration.port = localStorage.getItem("port");
         localStorage.removeItem("port");
-    	pulsarrConfig.radarr.configuration.apikey = localStorage.getItem("apikey");
+        pulsarrConfig.radarr.configuration.apikey = localStorage.getItem("apikey");
         localStorage.removeItem("apikey");
-    	pulsarrConfig.radarr.configuration.isAuth = localStorage.getItem("auth") == "true";
+        pulsarrConfig.radarr.configuration.isAuth = localStorage.getItem("auth") == "true";
         localStorage.removeItem("auth");
-    	pulsarrConfig.radarr.configuration.auth.user = localStorage.getItem("user");
+        pulsarrConfig.radarr.configuration.auth.user = localStorage.getItem("user");
         localStorage.removeItem("user");
-    	pulsarrConfig.radarr.configuration.auth.password = localStorage.getItem("password");
+        pulsarrConfig.radarr.configuration.auth.password = localStorage.getItem("password");
         localStorage.removeItem("password");
         localStorage.removeItem("moviePath");
         localStorage.setItem("pulsarrConfig", JSON.stringify(pulsarrConfig));
@@ -306,34 +312,34 @@ class Pulsarr {
 }
 
 class Server {
-    constructor (name, host, port, apikey, auth, user, password) {
+    constructor(name, host, port, apikey, auth, user, password) {
         var self = this;
         this.name = name;
-    	this.host = host;
-    	this.port = port;
-    	this.apikey = apikey;
-    	this.auth = auth;
-    	this.user = user;
-    	this.password = password;
+        this.host = host;
+        this.port = port;
+        this.apikey = apikey;
+        this.auth = auth;
+        this.user = user;
+        this.password = password;
     }
 
-	constructBaseUrl() {
-		var regex = new RegExp("https{0,1}:\/\/");
+    constructBaseUrl() {
+        var regex = new RegExp("https{0,1}:\/\/");
 
-		if (!regex.exec(this.host)) {
-			this.host = "http://" + this.host;
-		}
-	    if (this.port === "") {
-	        return this.host;
-	    } else {
-	        return this.host + ":" + this.port;
-	    }
-	}
+        if (!regex.exec(this.host)) {
+            this.host = "http://" + this.host;
+        }
+        if (this.port === "") {
+            return this.host;
+        } else {
+            return this.host + ":" + this.port;
+        }
+    }
 
     getPath() {
         var self = this;
-        return new Promise(function(resolve, reject) {
-            self.get("/api/rootfolder", "").then(function(response) {
+        return new Promise(function (resolve, reject) {
+            self.get("/api/rootfolder", "").then(function (response) {
                 resolve(response.text[0].path);
             });
         });
@@ -351,42 +357,42 @@ class Server {
             var url = self.constructBaseUrl() + endpoint + "?" + params;
 
 
-			http.open("GET", url, true);
-			if (self.auth === "true") http.setRequestHeader("Authorization", "Basic " + btoa(self.user + ":" + self.password));
-			http.setRequestHeader("X-Api-Key", self.apikey);
+            http.open("GET", url, true);
+            if (self.auth === "true") http.setRequestHeader("Authorization", "Basic " + btoa(self.user + ":" + self.password));
+            http.setRequestHeader("X-Api-Key", self.apikey);
 
-			http.onload = function() {
-				if (http.status === 200) {
-					var results = {
-						"text": JSON.parse(http.responseText),
-						"status": http.status
-					};
-					resolve(results);
-				} else {
-				  switch (http.status) {
-					case 401:
-					  reject("Unauthorised! Please check your API key or server authentication.");
-					  break;
-					case 500:
-					  reject("Failed fetch media info! Please check you are on a valid IMDB/TVDB movie or series page (not episode page).");
-					  break;
-					default:
-					  reject(Error("(" + http.status + ")" + http.statusText));
-				  }
-				}
-			};
+            http.onload = function () {
+                if (http.status === 200) {
+                    var results = {
+                        "text": JSON.parse(http.responseText),
+                        "status": http.status
+                    };
+                    resolve(results);
+                } else {
+                    switch (http.status) {
+                        case 401:
+                            reject("Unauthorised! Please check your API key or server authentication.");
+                            break;
+                        case 500:
+                            reject("Failed fetch media info! Please check you are on a valid IMDB/TVDB movie or series page (not episode page).");
+                            break;
+                        default:
+                            reject(Error("(" + http.status + ")" + http.statusText));
+                    }
+                }
+            };
 
-            http.ontimeout = function(error) {
+            http.ontimeout = function (error) {
                 reject(Error(self.name + " took too long to respond"));
             };
 
-			http.onerror = function() {
-				reject(Error("Network Error"));
-			};
+            http.onerror = function () {
+                reject(Error("Network Error"));
+            };
 
-			http.send();
-		});
-	}
+            http.send();
+        });
+    }
 
     post(endpoint, params) {
         var self = this;
@@ -401,35 +407,45 @@ class Server {
 
 
             http.open("POST", url, true);
-            if (self.auth == "true") http.setRequestHeader("Authorization", "Basic " + btoa(self.user + ":" + self.password));
-            http.setRequestHeader("X-Api-Key", self.apikey);
 
-            http.onload = function() {
+            if (self.auth == "true") {
+                http.setRequestHeader(
+                    "Authorization",
+                    "Basic " + btoa(self.user + ":" + self.password)
+                );
+            }
+
+            http.setRequestHeader("X-Api-Key", self.apikey);
+            http.setRequestHeader("Content-Type", "application/json");
+            http.setRequestHeader("Accept", "application/json");
+
+            http.onload = function () {
                 if (http.status === 201) {
                     var results = {
                         "text": JSON.parse(http.responseText),
                         "status": http.status
                     };
+
                     resolve(results);
                 } else {
-                  switch (http.status) {
-                    case 400:
-                      reject("Failed to add movie! Please check it is not already in your collection.");
-                      break;
-                    case 401:
-                      reject("Unauthorised! Please check your API key or server authentication.");
-                      break;
-                    default:
-                      reject(Error("(" + http.status + ")" + http.statusText));
-                  }
+                    switch (http.status) {
+                        case 400:
+                            reject("Failed to add movie! Please check it is not already in your collection.");
+                            break;
+                        case 401:
+                            reject("Unauthorised! Please check your API key or server authentication.");
+                            break;
+                        default:
+                            reject(Error("(" + http.status + ")" + http.statusText));
+                    }
                 }
             };
 
-            http.ontimeout = function(error) {
+            http.ontimeout = function (error) {
                 reject(Error("Server took too long to respond"));
             };
 
-            http.onerror = function() {
+            http.onerror = function () {
                 console.log(http);
                 reject(Error("Network Error"));
             };
@@ -488,13 +504,13 @@ class RadarrServer extends Server {
             }
         };
 
-        this.post("/api/movie", newMovie).then(function(response) {
+        this.post("/api/movie", newMovie).then(function (response) {
             radarr.updatePreferences(monitored, qualityId, minAvail, folderPath);
             pulsarr.info("Movie added to Radarr!");
-            setTimeout(function() {
+            setTimeout(function () {
                 window.close();
             }, 1500);
-        }).catch(function(error) {
+        }).catch(function (error) {
             pulsarr.info(error);
         });
     }
@@ -502,106 +518,106 @@ class RadarrServer extends Server {
     lookupMovie(imdbid) {
         var self = this;
         // antipattern: resolve acts as reject and vice versa
-        return new Promise(function(resolve, reject) {
+        return new Promise(function (resolve, reject) {
             if (imdbid === "") {
                 resolve();
             } else {
                 var existingSlug = self.isExistingMovie(imdbid);
                 var lookup = self.get("/api/movie/lookup", "term=imdb%3A%20" + imdbid);
-                Promise.all([lookup, existingSlug]).then(function(response) {
-                    reject({"type": "movie", "movie": response[0], "existingSlug": response[1]});
-                }).catch(function(error) {
+                Promise.all([lookup, existingSlug]).then(function (response) {
+                    reject({ "type": "movie", "movie": response[0], "existingSlug": response[1] });
+                }).catch(function (error) {
                     resolve(error);
                 });
             }
         });
     }
 
-	async lookupMovieByTitleYear(title, year) {
-		var self = this;
-		var searchString = title + " " + year;
-		searchString = encodeURI(searchString);
-		// antipattern: resolve acts as reject and vice versa
-		return new Promise(async function(resolve, reject) {
-			if (title === "") {
-				resolve();
-			} else {
-				var lookup = await self.get("/api/movie/lookup", "term=" + searchString)
-				var existingSlug = await self.isExistingMovieByTitleSlug(lookup.text[0].titleSlug)
-				if (lookup) {
-					reject({"type": "movie", "movie": lookup, "existingSlug": existingSlug});
-				} else {
-					resolve(error);
-				}
-			};
-		});
-	}
+    async lookupMovieByTitleYear(title, year) {
+        var self = this;
+        var searchString = title + " " + year;
+        searchString = encodeURI(searchString);
+        // antipattern: resolve acts as reject and vice versa
+        return new Promise(async function (resolve, reject) {
+            if (title === "") {
+                resolve();
+            } else {
+                var lookup = await self.get("/api/movie/lookup", "term=" + searchString)
+                var existingSlug = await self.isExistingMovieByTitleSlug(lookup.text[0].titleSlug)
+                if (lookup) {
+                    reject({ "type": "movie", "movie": lookup, "existingSlug": existingSlug });
+                } else {
+                    resolve(error);
+                }
+            };
+        });
+    }
 
     async profilesById() {
-		try {
-			let profiles = await this.get("/api/qualityprofile", "");
+        try {
+            let profiles = await this.get("/api/qualityprofile", "");
 
-			for (let i = 0; i < profiles.text.length; i++) {
+            for (let i = 0; i < profiles.text.length; i++) {
                 $('#lstProfile')
                     .append($('<option>', { value: profiles.text[i].id })
-                    .text(profiles.text[i].name));
+                        .text(profiles.text[i].name));
             }
             if (pulsarrConfig.radarr.preferences.qualityProfileId <= $('#lstProfile').children('option').length) {
                 $('#lstProfile').prop('selectedIndex', pulsarrConfig.radarr.preferences.qualityProfileId - 1);
             }
-		} catch (err) {
-			pulsarr.info("profilesById Failed! " + err);
-		}
+        } catch (err) {
+            pulsarr.info("profilesById Failed! " + err);
+        }
     }
 
     async folderPathsByPath() {
-		try {
-			let folderPaths = await this.get("/api/rootfolder", "")
+        try {
+            let folderPaths = await this.get("/api/rootfolder", "")
 
-			for (var i = 0; i < folderPaths.text.length; i++) {
+            for (var i = 0; i < folderPaths.text.length; i++) {
                 $('#lstFolderPath')
                     .append($('<option>', { value: folderPaths.text[i].path })
-                    .text(folderPaths.text[i].path));
+                        .text(folderPaths.text[i].path));
                 if (pulsarrConfig.radarr.preferences.folderPath === folderPaths.text[i].path) {
                     $('#lstFolderPath').prop('selectedIndex', i);
                 }
             }
-		} catch (err) {
-			pulsarr.info("folderPathsByPath Failed! " + err);
-		}
+        } catch (err) {
+            pulsarr.info("folderPathsByPath Failed! " + err);
+        }
     }
 
     isExistingMovie(imdbid) {
         var self = this;
-        return new Promise(function(resolve, reject) {
-            self.get("/api/movie", "").then(function(response) {
+        return new Promise(function (resolve, reject) {
+            self.get("/api/movie", "").then(function (response) {
                 for (var i = 0; i < response.text.length; i++) {
                     if (imdbid === response.text[i].imdbId) {
                         resolve(response.text[i].titleSlug);
                     }
                 }
                 resolve("");
-            }).catch(function(error) {
+            }).catch(function (error) {
                 reject(error);
             });
         });
     }
 
-	isExistingMovieByTitleSlug(titleSlug) {
-		var self = this;
-		return new Promise(function(resolve, reject) {
-			self.get("/api/movie", "").then(function(response) {
-				for (var i = 0; i < response.text.length; i++) {
-					if (titleSlug === response.text[i].titleSlug) {
-						resolve(response.text[i].titleSlug);
-					}
-				}
-				resolve("");
-			}).catch(function(error) {
-				reject(error);
-			});
-		});
-	}
+    isExistingMovieByTitleSlug(titleSlug) {
+        var self = this;
+        return new Promise(function (resolve, reject) {
+            self.get("/api/movie", "").then(function (response) {
+                for (var i = 0; i < response.text.length; i++) {
+                    if (titleSlug === response.text[i].titleSlug) {
+                        resolve(response.text[i].titleSlug);
+                    }
+                }
+                resolve("");
+            }).catch(function (error) {
+                reject(error);
+            });
+        });
+    }
 }
 
 class SonarrServer extends Server {
@@ -646,6 +662,7 @@ class SonarrServer extends Server {
             "titleSlug": series.titleSlug,
             "images": series.images,
             "tvdbId": series.tvdbId,
+            "tmdbId": series.tmdbId,
             "rootFolderPath": folderPath,
             "monitored": monitored,
             "addOptions": {
@@ -655,13 +672,13 @@ class SonarrServer extends Server {
             }
         };
 
-        this.post("/api/series", newSeries).then(function(response) {
+        this.post("/api/series", newSeries).then(function (response) {
             sonarr.updatePreferences(monitored, qualityId, seriesType, folderPath);
             pulsarr.info("Series added to Sonarr!");
-            setTimeout(function() {
+            setTimeout(function () {
                 window.close();
             }, 1500);
-        }).catch(function(error) {
+        }).catch(function (error) {
             pulsarr.info(error);
         });
     }
@@ -669,12 +686,50 @@ class SonarrServer extends Server {
     async lookupSeries(tvdbid) {
         var self = this;
         // antipattern: resolve acts as reject and vice versa
-        return new Promise(function(resolve, reject) {
+        return new Promise(function (resolve, reject) {
             if (tvdbid === "") {
                 resolve();
             } else {
                 var existingSlug = self.isExistingSeries(tvdbid);
-                var lookup = self.get("/api/series/lookup", "term=tvdb%3A%20" + tvdbid);
+                var lookup = self.get("/api/series/lookup", "term=tvdb%3A" + tvdbid);
+                Promise.all([lookup, existingSlug]).then(function (response) {
+                    reject({ "type": "series", "series": response[0], "existingSlug": response[1] });
+                }).catch(function (error) {
+                    resolve(error);
+                });
+            }
+        });
+    }
+
+    async lookupSeriesByTitleYear(title, year) {
+        var self = this;
+        var searchString = title + " " + year;
+        searchString = encodeURI(searchString);
+        // antipattern: resolve acts as reject and vice versa
+        return new Promise(async function (resolve, reject) {
+            if (title === "") {
+                resolve();
+            } else {
+                var lookup = await self.get("/api/series/lookup", "term=" + searchString)
+                var existingSlug = await self.isExistingSeriesByTitleSlug(lookup.text[0].titleSlug)
+                if (lookup) {
+                    reject({ "type": "series", "series": lookup, "existingSlug": existingSlug });
+                } else {
+                    resolve(error);
+                }
+            };
+        });
+    }
+
+    lookupSeriesByTmdb(tmdbid) {
+        var self = this;
+        // antipattern: resolve acts as reject and vice versa (kept consistent with existing style)
+        return new Promise(function(resolve, reject) {
+            if (!tmdbid) {
+                resolve();
+            } else {
+                var existingSlug = self.isExistingSeriesByTmdb(tmdbid);
+                var lookup = self.get("/api/series/lookup", "term=tmdb%3A" + tmdbid);
                 Promise.all([lookup, existingSlug]).then(function(response) {
                     reject({"type": "series", "series": response[0], "existingSlug": response[1]});
                 }).catch(function(error) {
@@ -684,66 +739,78 @@ class SonarrServer extends Server {
         });
     }
 
-	async lookupSeriesByTitleYear(title, year) {
-		var self = this;
-		var searchString = title + " " + year;
-		searchString = encodeURI(searchString);
-		// antipattern: resolve acts as reject and vice versa
-		return new Promise(async function(resolve, reject) {
-			if (title === "") {
-				resolve();
-			} else {
-				var lookup = await self.get("/api/series/lookup", "term=" + searchString)
-				var existingSlug = await self.isExistingSeriesByTitleSlug(lookup.text[0].titleSlug)
-				if (lookup) {
-					reject({"type": "series", "series": lookup, "existingSlug": existingSlug});
-				} else {
-					resolve(error);
-				}
-			};
-		});
-	}
-
     async profilesById() {
-		try {
-			let profiles = await this.get("/api/qualityprofile", "");
+        try {
+            let profiles = await this.get("/api/qualityprofile", "");
 
-			for (var i = 0; i < profiles.text.length; i++) {
+            for (var i = 0; i < profiles.text.length; i++) {
                 $('#lstProfile')
                     .append($('<option>', { value: profiles.text[i].id })
-                    .text(profiles.text[i].name));
+                        .text(profiles.text[i].name));
             }
             if (pulsarrConfig.sonarr.preferences.qualityProfileId <= $('#lstProfile').children('option').length) {
                 $('#lstProfile').prop('selectedIndex', pulsarrConfig.sonarr.preferences.qualityProfileId - 1);
             }
-		} catch (err) {
-			pulsarr.info("profilesById Failed! " + err);
-		}
+        } catch (err) {
+            pulsarr.info("profilesById Failed! " + err);
+        }
     }
 
     async folderPathsByPath() {
-		try {
-			let folderPaths = await this.get("/api/rootfolder", "");
+        try {
+            let folderPaths = await this.get("/api/rootfolder", "");
 
             for (var i = 0; i < folderPaths.text.length; i++) {
                 $('#lstFolderPath')
                     .append($('<option>', { value: folderPaths.text[i].path })
-                    .text(folderPaths.text[i].path));
+                        .text(folderPaths.text[i].path));
                 if (pulsarrConfig.sonarr.preferences.folderPath === folderPaths.text[i].path) {
                     $('#lstFolderPath').prop('selectedIndex', i);
                 }
             }
-		} catch (err) {
-			pulsarr.info("folderPathsByPath Failed! " + err);
-		}
+        } catch (err) {
+            pulsarr.info("folderPathsByPath Failed! " + err);
+        }
     }
 
     async isExistingSeries(tvdbid) {
         var self = this;
+        return new Promise(function (resolve, reject) {
+            self.get("/api/series", "").then(function (response) {
+                for (var i = 0; i < response.text.length; i++) {
+                    if (tvdbid == response.text[i].tvdbId) {
+                        resolve(response.text[i].titleSlug);
+                    }
+                }
+                resolve("");
+            }).catch(function (error) {
+                reject(error);
+            });
+        });
+    }
+
+    isExistingSeriesByTitleSlug(titleSlug) {
+        var self = this;
+        return new Promise(function (resolve, reject) {
+            self.get("/api/series", "").then(function (response) {
+                for (var i = 0; i < response.text.length; i++) {
+                    if (titleSlug === response.text[i].titleSlug) {
+                        resolve(response.text[i].titleSlug);
+                    }
+                }
+                resolve("");
+            }).catch(function (error) {
+                reject(error);
+            });
+        });
+    }
+
+    isExistingSeriesByTmdb(tmdbid) {
+        var self = this;
         return new Promise(function(resolve, reject) {
             self.get("/api/series", "").then(function(response) {
                 for (var i = 0; i < response.text.length; i++) {
-                    if (tvdbid == response.text[i].tvdbId) {
+                    if (String(tmdbid) === String(response.text[i].tmdbId)) {
                         resolve(response.text[i].titleSlug);
                     }
                 }
@@ -753,22 +820,6 @@ class SonarrServer extends Server {
             });
         });
     }
-
-	isExistingSeriesByTitleSlug(titleSlug) {
-		var self = this;
-		return new Promise(function(resolve, reject) {
-			self.get("/api/series", "").then(function(response) {
-				for (var i = 0; i < response.text.length; i++) {
-					if (titleSlug === response.text[i].titleSlug) {
-						resolve(response.text[i].titleSlug);
-					}
-				}
-				resolve("");
-			}).catch(function(error) {
-				reject(error);
-			});
-		});
-	}
 }
 
 function init() {
@@ -800,7 +851,7 @@ function init() {
             pulsarrConfig.radarr.configuration.auth.password
         );
     } else {
-        radarr = new RadarrServer("","","",false,"","","");
+        radarr = new RadarrServer("", "", "", false, "", "", "");
     }
 
     if (pulsarrConfig.sonarr.isEnabled) {
@@ -813,7 +864,7 @@ function init() {
             pulsarrConfig.sonarr.configuration.auth.password
         );
     } else {
-        sonarr = new SonarrServer("","","",false,"","","");
+        sonarr = new SonarrServer("", "", "", false, "", "", "");
     }
 
     if (!(pulsarrConfig.radarr.isEnabled || pulsarrConfig.sonarr.isEnabled)) {
@@ -827,7 +878,7 @@ function getCurrentTabUrl(callback) {
         currentWindow: true
     };
 
-    chrome.tabs.query(queryInfo, function(tabs) {
+    chrome.tabs.query(queryInfo, function (tabs) {
         var tab = tabs[0];
         var url = tab.url;
 
@@ -836,188 +887,183 @@ function getCurrentTabUrl(callback) {
 }
 
 let loadFromImdbUrl = async (url) => {
-	try {
-		let imdbid = pulsarr.extractIMDBID(url);
-		let tvdbid = await pulsarr.TvdbidFromImdbid(imdbid);
+    try {
+        let imdbid = pulsarr.extractIMDBID(url);
+        let tvdbid = await pulsarr.TvdbidFromImdbid(imdbid);
 
-		Promise.all([radarr.lookupMovie(imdbid), sonarr.lookupSeries(tvdbid)]).then(function(error) {
-			if (pulsarrConfig.radarr.isEnabled && pulsarrConfig.sonarr.isEnabled) {
-				pulsarr.info(error);
-			} else if (pulsarrConfig.radarr.isEnabled && !pulsarrConfig.sonarr.isEnabled) {
-				pulsarr.init(blackhole);
-				$('#optLgConfig').removeClass("hidden");
-				pulsarr.info("Unable to find movie. If this is a series, please configure a Sonarr server.");
-			} else if (!pulsarrConfig.radarr.isEnabled && pulsarrConfig.sonarr.isEnabled) {
-				pulsarr.init(blackhole);
-				$('#optLgConfig').removeClass("hidden");
-				pulsarr.info("Unable to find series. If this is a movie, please configure a Radarr server.");
-			} else {
-				chrome.runtime.openOptionsPage();
-			}
-		}).catch(function(response) {
-			pulsarr.init(response);
-		});
-	} catch (err) {
-		pulsarr.info(err);
-	}
+        Promise.all([radarr.lookupMovie(imdbid), sonarr.lookupSeries(tvdbid)]).then(function (error) {
+            if (pulsarrConfig.radarr.isEnabled && pulsarrConfig.sonarr.isEnabled) {
+                pulsarr.info(error);
+            } else if (pulsarrConfig.radarr.isEnabled && !pulsarrConfig.sonarr.isEnabled) {
+                pulsarr.init(blackhole);
+                $('#optLgConfig').removeClass("hidden");
+                pulsarr.info("Unable to find movie. If this is a series, please configure a Sonarr server.");
+            } else if (!pulsarrConfig.radarr.isEnabled && pulsarrConfig.sonarr.isEnabled) {
+                pulsarr.init(blackhole);
+                $('#optLgConfig').removeClass("hidden");
+                pulsarr.info("Unable to find series. If this is a movie, please configure a Radarr server.");
+            } else {
+                chrome.runtime.openOptionsPage();
+            }
+        }).catch(function (response) {
+            pulsarr.init(response);
+        });
+    } catch (err) {
+        pulsarr.info(err);
+    }
 }
 
 let loadFromTvdbUrl = async (url) => {
-	try {
-		let series = await sonarr.lookupSeries(pulsarr.extractTVDBID(url));
+    try {
+        let series = await sonarr.lookupSeries(pulsarr.extractTVDBID(url));
 
-		if (series) {
-			pulsarr.info(series);
-		}
-	} catch (err) {
-		pulsarr.init(err);
-	}
+        if (series) {
+            pulsarr.info(series);
+        }
+    } catch (err) {
+        pulsarr.init(err);
+    }
 }
 
 let loadFromTraktUrl = async (url) => {
-	var regextv = new RegExp("trakt.tv\/shows\/");
-	var regexmov = new RegExp("trakt.tv\/movies\/");
-	if (regextv.test(url)) {
-		$.ajax({
-			url : url,
-			success : function(result) {sonarr.lookupSeries(pulsarr.extractTVDBID(result)).then(function(error) {
-				pulsarr.info(error);
-			}).catch(function(response) {
-				pulsarr.init(response);
-			});}
-		});
-	} else if (regexmov.test(url)) {
-		$.ajax({
-			url : url,
-			success : function(result) {radarr.lookupMovie(pulsarr.extractIMDBID(result)).then(function(error) {
-				pulsarr.info(error);
-			}).catch(function(response) {
-				pulsarr.init(response);
-			});}
-		});
-	} else {
-		pulsarr.info("Could not find media. Are you on a valid TV Show or Movie page?");
-	}
+    var regextv = new RegExp("trakt.tv\/shows\/");
+    var regexmov = new RegExp("trakt.tv\/movies\/");
+    if (regextv.test(url)) {
+        $.ajax({
+            url: url,
+            success: function (result) {
+                sonarr.lookupSeries(pulsarr.extractTVDBID(result)).then(function (error) {
+                    pulsarr.info(error);
+                }).catch(function (response) {
+                    pulsarr.init(response);
+                });
+            }
+        });
+    } else if (regexmov.test(url)) {
+        $.ajax({
+            url: url,
+            success: function (result) {
+                radarr.lookupMovie(pulsarr.extractIMDBID(result)).then(function (error) {
+                    pulsarr.info(error);
+                }).catch(function (response) {
+                    pulsarr.init(response);
+                });
+            }
+        });
+    } else {
+        pulsarr.info("Could not find media. Are you on a valid TV Show or Movie page?");
+    }
 }
 
 let loadFromRottenUrl = async (url) => {
-	var regextv = new RegExp("rottentomatoes.com\/tv\/");
-	var regexmov = new RegExp("rottentomatoes.com\/m\/");
-	if (regextv.test(url)) {
-		try {
-			var title = url.split("/tv/")[1].split("/")[0].replace(/\_/g," ");
-			chrome.extension.getBackgroundPage().console.log("Title: " + title);
-			let imdbid = await pulsarr.ImdbidFromTitle(title,0);
-			let tvdbid = await pulsarr.TvdbidFromImdbid(imdbid);
-			let series = await sonarr.lookupSeries(tvdbid);
-			if (series) {
-				pulsarr.info(series);
-			}
-		} catch (err) {
-			pulsarr.init(err);
-		}
-	} else if (regexmov.test(url)) {
-		try {
-			let result = await $.ajax({url: url, datatype: "xml"});
-			var title = $(result).find("#movie-title").text().trim();
-			let imdbid = await pulsarr.ImdbidFromTitle(title,1);
-			let movie = await radarr.lookupMovie(imdbid);
-			if (movie) {
-				pulsarr.info(movie);
-			}
-		} catch (err) {
-			pulsarr.init(err);
-		}
-	} else {
-		pulsarr.info("Could not find media. Are you on a valid TV Show or Movie page?");
-	}
+    var regextv = new RegExp("rottentomatoes.com\/tv\/");
+    var regexmov = new RegExp("rottentomatoes.com\/m\/");
+    if (regextv.test(url)) {
+        try {
+            var title = url.split("/tv/")[1].split("/")[0].replace(/\_/g, " ");
+            chrome.extension.getBackgroundPage().console.log("Title: " + title);
+            let imdbid = await pulsarr.ImdbidFromTitle(title, 0);
+            let tvdbid = await pulsarr.TvdbidFromImdbid(imdbid);
+            let series = await sonarr.lookupSeries(tvdbid);
+            if (series) {
+                pulsarr.info(series);
+            }
+        } catch (err) {
+            pulsarr.init(err);
+        }
+    } else if (regexmov.test(url)) {
+        try {
+            let result = await $.ajax({ url: url, datatype: "xml" });
+            var title = $(result).find("#movie-title").text().trim();
+            let imdbid = await pulsarr.ImdbidFromTitle(title, 1);
+            let movie = await radarr.lookupMovie(imdbid);
+            if (movie) {
+                pulsarr.info(movie);
+            }
+        } catch (err) {
+            pulsarr.init(err);
+        }
+    } else {
+        pulsarr.info("Could not find media. Are you on a valid TV Show or Movie page?");
+    }
 }
 
 let loadFromTMBUrl = async (url) => {
-	var regextv = new RegExp("themoviedb.org\/tv\/");
-	var regexmov = new RegExp("themoviedb.org\/movie\/");
-	if (regextv.test(url)) {
-		try {
-			let result = await $.ajax({url: url, datatype: "xml"});
-			var title = $(result).find(".title").find("a").find("h2").text().trim();
-			var date = $(result).find(".title").find(".release_date").text().trim();
-			title = title + " " + date;
-			let imdbid = await pulsarr.ImdbidFromTitle(title,0);
-			let tvdbid = await pulsarr.TvdbidFromImdbid(imdbid);
-			let series = await sonarr.lookupSeries(tvdbid);
-			
-			if (series) {
-				pulsarr.info(series);
-			}
-		} catch (err) {
-			pulsarr.init(err);
-		}
-	} else if (regexmov.test(url)) {
-		try {
-			let result = await $.ajax({url: url, datatype: "xml"});
-			var title = $(result).find(".title").find("a").find("h2").text().trim();
-			var date = $(result).find(".title").find(".release_date").text().trim();
-			title = title + " " + date;
-			let imdbid = await pulsarr.ImdbidFromTitle(title,1);
-			let movie = await radarr.lookupMovie(imdbid);
-			if (movie) {
-				pulsarr.info(movie);
-			}
-		} catch (err) {
-			pulsarr.init(err);
-		}
-	} else {
-		pulsarr.info("Could not find media. Are you on a valid TV Show or Movie page?");
-	}
+    var regextv = new RegExp("themoviedb.org\/tv\/");
+    var regexmov = new RegExp("themoviedb.org\/movie\/");
+    if (regextv.test(url)) {
+    try {
+        let tmdbid = pulsarr.extractTMDBID(url);
+        if (!tmdbid) return pulsarr.info("Could not extract TMDB ID from this TMDB TV page.");
+
+        sonarr.lookupSeriesByTmdb(tmdbid).then(function(error) {
+            pulsarr.info(error);
+        }).catch(function(response) {
+            pulsarr.init(response);
+        });
+    } catch (err) {
+        pulsarr.info(err);
+    }
+}
+ else if (regexmov.test(url)) {
+        try {
+            let result = await $.ajax({ url: url, datatype: "xml" });
+            var title = $(result).find(".title").find("a").find("h2").text().trim();
+            var date = $(result).find(".title").find(".release_date").text().trim();
+            title = title + " " + date;
+            let imdbid = await pulsarr.ImdbidFromTitle(title, 1);
+            let movie = await radarr.lookupMovie(imdbid);
+            if (movie) {
+                pulsarr.info(movie);
+            }
+        } catch (err) {
+            pulsarr.init(err);
+        }
+    } else {
+        pulsarr.info("Could not find media. Are you on a valid TV Show or Movie page?");
+    }
 }
 
 getCurrentTabUrl(async (url) => {
     if (pulsarr.isImdb(url)) {
-		loadFromImdbUrl(url);
+        loadFromImdbUrl(url);
     } else if (pulsarr.isTvdb(url)) {
-		loadFromTvdbUrl(url);
-	} else if (pulsarr.isTrakt(url)) {
-		loadFromTraktUrl(url);
-	} else if (pulsarr.isRotten(url)) {
-		loadFromRottenUrl(url);
-	} else if (pulsarr.isTMB(url)) {
-		loadFromTMBUrl(url);
+        loadFromTvdbUrl(url);
+    } else if (pulsarr.isTrakt(url)) {
+        loadFromTraktUrl(url);
+    } else if (pulsarr.isRotten(url)) {
+        loadFromRottenUrl(url);
+    } else if (pulsarr.isTMB(url)) {
+        loadFromTMBUrl(url);
     } else {
         pulsarr.info("Pulsarr does not recognise this as a valid website. Please check if that you are on either IMDB or TVDB.");
     }
 
-    $('#btmSmConfig').on('click', function() {
+    $('#btmSmConfig').on('click', function () {
         chrome.runtime.openOptionsPage();
     });
 
-    $('#btmLgConfig').on('click', function() {
+    $('#btmLgConfig').on('click', function () {
         chrome.runtime.openOptionsPage();
     });
 });
 
-jQuery.fn.changepanel = function(media) {
+jQuery.fn.changepanel = function (media) {
     for (var i = 0; i < media.images.length; i++) {
         if (media.images[i].coverType === "poster") {
-            let posterUrl = media.images[i].url;
+    let posterUrl = media.images[i].url;
 
-            // If Radarr/Sonarr returned a relative URL, prefix it
-            if (posterUrl && posterUrl.startsWith("/")) {
-                // Keep extension-local images (like blackhole poster)
-                if (!posterUrl.startsWith("/img/")) {
-                    // Movies come from Radarr, series from Sonarr
-                    if (media.tmdbId !== undefined) {
-                        posterUrl = radarr.constructBaseUrl() + posterUrl;
-                    } else if (media.tvdbId !== undefined) {
-                        posterUrl = sonarr.constructBaseUrl() + posterUrl;
-                    }
-                }
-            }
+    if (posterUrl && posterUrl.startsWith("/") && !posterUrl.startsWith("/img/")) {
+        const isMovie = (media.tmdbId !== undefined) && (media.tvdbId === undefined);
+        posterUrl = (isMovie ? radarr.constructBaseUrl() : sonarr.constructBaseUrl()) + posterUrl;
+    }
 
-            $('#image').attr("src", posterUrl);
-        }
+    $('#image').attr("src", posterUrl);
+}
+
     }
     $('#title').html(media.title + "<span> (" + media.year + ")</span>");
-    $('#description').each(function() {
+    $('#description').each(function () {
         var content = $(this).html(),
             char = 140;
         if (content.length > char) {
@@ -1029,7 +1075,7 @@ jQuery.fn.changepanel = function(media) {
             $(this).html(html);
         }
     });
-    $("#dotdotdot").on('click', function() {
+    $("#dotdotdot").on('click', function () {
         var moreText = "(...)";
         var lessText = "(less)";
         var $this = $(this);
@@ -1040,14 +1086,14 @@ jQuery.fn.changepanel = function(media) {
 
 init();
 
-$("#btnAddSearch").on('mouseover', function() {
+$("#btnAddSearch").on('mouseover', function () {
     $("#btnAdd").addClass('dualHover');
 });
 
-$("#btnAddSearch").on('mouseout', function() {
+$("#btnAddSearch").on('mouseout', function () {
     $("#btnAdd").removeClass('dualHover');
 });
 
-jQuery(document).ready(function(){
+jQuery(document).ready(function () {
     jQuery('.scrollbar-inner').scrollbar();
 });
